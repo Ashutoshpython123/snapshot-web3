@@ -1,0 +1,15 @@
+
+# dependencies
+node_modules
+.env
+abi
+frontend/src/utils/config.js
+package-lock.json
+frontend/public/additionaldocs
+frontend/public/img
+frontend/public/lightpaper
+frontend/public/pitchdeck
+frontend/public/whitepaper
+frontend/package.json
+frontend/package-lock.json
+metamaskAction.js
