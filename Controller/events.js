@@ -2,14 +2,14 @@ const Event = require("../Model/eventModel");
 const Web3 = require("web3");
 const snapshot = require("../Model/snapshotModel");
 const projectModel = require("../Model/projectModel")
+const eventAbi = require("../BlockchainContractAbi/bulk_abi.json")
 
 const nodeevents = {
   //Function to register the user.
   nodeEvent: async (req, res) => {
     console.log('klSFE')
-    const eventAbi = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"operator","type":"address"},{"indexed":false,"internalType":"bool","name":"approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[],"name":"_partslink","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"byebye","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"goblinbyebye","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"goblins","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"howmanygobblins","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"parts","type":"string"}],"name":"makegobblinhaveparts","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"lords","type":"address"},{"internalType":"uint256","name":"_goblins","type":"uint256"}],"name":"makegoblinnnfly","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bool","name":"_bye","type":"bool"}],"name":"makegoblngobyebye","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"makingobblin","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ownerOf","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"bytes","name":"_data","type":"bytes"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"bool","name":"approved","type":"bool"}],"name":"setApprovalForAll","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_byebye","type":"uint256"}],"name":"spredgobblins","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"sumthinboutfunds","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenURI","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"transferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"}]
     try {
-      var addr = "0xbCe3781ae7Ca1a5e050Bd9C4c77369867eBc307e";
+      var addr = "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB";
       const web3 = new Web3(
         new Web3.providers.HttpProvider(
           "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
@@ -21,11 +21,11 @@ const nodeevents = {
       var k;
       var fromBlockData = 15443367;
       var toBlockData;
-      for (k = 1; k <= 42; k++) {
+      for (k = 1; k <= 47; k++) {
 
         toBlockData = fromBlockData + (interval - 1);
-        if (k == 42) {
-          toBlockData = 15443367
+        if (k == 47) {
+          toBlockData = 15653139
         }
 
         const res = await MyContract.getPastEvents('Transfer', {
@@ -67,13 +67,13 @@ const nodeevents = {
       for (let i = 0; i < project.length; i++) {
         const evntcheck = await snapshot.findOne({ owner: project[i].to, id: project[i].tokenId })
         if (evntcheck) {
-          // console.log( evntcheck, '__________',project[i].tokenId)
+          console.log('__________',project[i].tokenId)
           const result = await snapshot.findOneAndUpdate(
             { owner: project[i].to, id: project[i].tokenId },
             { owner: project[i].from }
           );
         } else {
-          console.log('heeeeeee', project[i].tokenId,)
+          console.log('heeeeeeellllLLLLLLLLLLLLLLLLLLLL', project[i].tokenId,)
         }
       }
 
@@ -114,72 +114,32 @@ const nodeevents = {
 
   getProfile: async (req, res) => {
     try {
-      const data = req.query.page;
-      const addr = data.split(',')[0].toLowerCase();
+      //   const options = {
+      //     method: 'GET',
+      //     url: 'https://deep-index.moralis.io/api/v2/nft/0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB/transfers',
+      //     params: { chain: 'eth', format: 'decimal', page : 3 },
+      //     headers: { accept: 'application/json', "x-api-key" : 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
+      // };
 
-      //Reading ico
-      const completed = await Event.find({ user_address: addr }).sort({ createdAt: -1 });
-      const vesting = await Vesting.find().sort({ createdAt: -1 });
-      var VESTING = []
-      for (let i = 0; i < completed.length; i++) {
-        var vestingdata = await Vesting.findOne({ contract_addr: completed[i].contract_addr });
-
-        if (vestingdata) {
-          var upcPoolData = await upcPool.findOne({ address: completed[i].contract_addr });
-          VESTING.push(
-            {
-              "logo": upcPoolData.images,
-              "title": upcPoolData.title,
-              "phase": upcPoolData.idophase,
-              "amount": completed[i].amount,
-              "vesting_percentage": vestingdata.vesting_percentage,
-              "return_of_investment": vestingdata.return_of_investment,
-              "token_symbol": vestingdata.token_symbol,
-              "vetsing_date": vestingdata.vetsing_date,
-              "pool_type": upcPoolData.up_pool_access
-            }
-          )
-        }
-
-      }
-      //pagination.
-      const pageSize = parseInt(data.split(',')[1]);
-
-      const totalcompleted = completed.length;
-      const totalcompletedPage = Math.ceil(totalcompleted / pageSize);
-      // const paginatedCompleted = await Event
-      //   .find({ user_address: addr })
-      //   .sort({ createdAt: -1 })
-      //   .limit(pageSize);
-
-      var userProfile = [];
-      for (let i = 0; i < completed.length; i++) {
-        var upcPoolData = await upcPool.findOne({ address: completed[i].contract_addr });
-
-        userProfile.push({
-          "title": upcPoolData.title,
-          "logo_url": upcPoolData.images,
-          "pool_access_type": upcPoolData.up_pool_access,
-          "phase": upcPoolData.idophase,
-          "crypto_type": upcPoolData.crypto_type,
-          "pool_raise": upcPoolData.up_pool_raise,
-          "symbol": upcPoolData.symbol,
-          "amount": completed[i].amount,
-          "pool_type": upcPoolData.up_pool_access
-        })
-
-      }
-
+      // axios
+      //     .request(options)
+      //     .then(function (response) {
+      //         console.log(response.data);
+      //     })
+      //     .catch(function (error) {
+      //         console.error(error);
+      //     });
+      const snap = new snapshot(req.body)
+      await snap.save()
       res.json({
-        totalcompletedPage: totalcompletedPage,
-        paginatedcompleted_pool: userProfile,
-        vesting: VESTING
+        msg: "done"
       });
 
     } catch (err) {
       return res.status(500).json({ msg: err.message });
     }
   },
+
 
   createVesting: async (req, res) => {
     try {

@@ -2,6 +2,9 @@ import React, { Component } from "react";
 import { CSVLink, CSVDownload } from "react-csv";
 import Abi from "./sabi.json"
 import Web3 from "web3";
+import { postDataAPI } from "./utils/API"
+import axios from 'axios';
+import { Alchemy, Network, fromHex } from "alchemy-sdk";
 
 let web3 = new Web3(
     new Web3.providers.HttpProvider("https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161")
@@ -9,7 +12,7 @@ let web3 = new Web3(
 const divider = 500
 
 const totalItem = 9999
-let base = 1
+let base = 0
 let rem = totalItem % divider;
 let noOfIteration = Math.floor(totalItem / divider)
 let from = base;
@@ -42,14 +45,14 @@ class NFTSnapshot extends Component {
         }
         const contractInstance = new web3.eth.Contract(
             Abi,
-            "0x0b4B2bA334f476C8F41bFe52A428D6891755554d"
+            "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB"
         );
         const arr = range(fr, to);
 
         let dataArr;
         // try {
         dataArr = await Promise.all(arr.map(async (key) => {
-            return await contractInstance.methods.ownerOf(+key).call();
+            return await contractInstance.methods.punkIndexToAddress(+key).call();
         })
         );
         // } catch (error) {
@@ -82,7 +85,7 @@ class NFTSnapshot extends Component {
                 }
             }
 
-            if (status) {
+            if (status && rem) {
                 from = from + divider
                 to = to + rem
                 console.log('22222222222')
@@ -121,6 +124,86 @@ class NFTSnapshot extends Component {
             : this.setState({ isLoading: false, fileError: true });
     };
 
+    getSingleOwner = async () => {
+        const contractInstance = new web3.eth.Contract(
+            Abi,
+            "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB"
+        );
+
+        for (let index = 10002; index <= 30006; index++) {
+            try {
+                var data = await contractInstance.methods.ownerOf(index).call();
+                let instance = {
+                    owner: data,
+                    id: `${index}`,
+                    eTokens: "1"
+                }
+                await postDataAPI('insertOwner', instance)
+            } catch (err) {
+                console.log(index, 'err')
+            }
+
+        }
+    }
+
+    getAllNFTOwner = async () => {
+        // const options = {
+        //     method: 'GET',
+        //     url: 'https://deep-index.moralis.io/api/v2/nft/0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB/transfers',
+        //     params: { chain: 'eth', format: 'decimal', page : 200 },
+        //     headers: { accept: 'application/json', "x-api-key" : 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
+        // };
+
+        // axios
+        //     .request(options)
+        //     .then(function (response) {
+        //         console.log(response.data.result.length);
+        //     })
+        //     .catch(function (error) {
+        //         console.error(error);
+        //     });
+
+
+        const config = {
+            apiKey: "vn0-0S2q3PUTYryCzelASrEiJrr08EGM",
+            network: Network.ETH_MAINNET,
+        };
+        const alchemy = new Alchemy(config);
+
+        const address = ["0xf64e6fB725f04042b5197e2529b84be4a925902C"];
+        // Get all NFTs
+        const response = await alchemy.core.getAssetTransfers({
+            fromBlock: 15443367,
+            contractAddresses: address,
+            category: ["erc1155"],
+            excludeZeroValue: false,
+        });
+        console.log(response)
+
+        // const nftId = 5100;
+
+        // Get transactions for the NFT
+        // let txns = response.transfers.filter(
+        //   (txn) => fromHex(txn.erc721TokenId) === nftId
+        // );
+        // console.log('++++++++++++',txns);
+
+        // const data = await alchemy.core.getAssetTransfers({
+        //     fromBlock: 15443367,
+        //     fromAddress: "0xeD01f8A737813F0bDA2D4340d191DBF8c2Cbcf30",
+        //     category: ["external", "internal", "erc20", "erc721", "erc1155"],
+        //   });
+
+          
+        // console.log(parseInt("0x000000000000000000000000000000000000000000000000000000000000114a"))
+        // console.log(parseInt("0xebb1ab"), parseInt("0xebb697"))
+        // console.log(data)
+        // const filterd = data.transfers.filter(txn => txn.asset === "WPUNKS")
+        // console.log(filterd)
+
+        const owner = await alchemy.nft.getOwnersForNft("0xf64e6fB725f04042b5197e2529b84be4a925902C", 1);
+        console.log(owner);
+    }
 
 
     render() {
@@ -140,7 +223,7 @@ class NFTSnapshot extends Component {
                 <br />
                 <button onClick={() => this.getNFTDetails(from, to)}>Snapshot data</button>
                 <CSVLink
-                    filename={`JRNY NFT Club (JNC).csv`}
+                    filename={`CRYPTOPUNKS (Ͼ).csv`}
                     data={this.state.csvData}
                     headers={this.state.headers}
                     target="_blank"
@@ -158,6 +241,9 @@ class NFTSnapshot extends Component {
                 <br />
                 <br />
                 <br />
+                <button onClick={() => this.getSingleOwner()}>Snapshot single data</button><br />
+                <button onClick={() => this.getAllNFTOwner()}>Snapshot all nft Owner</button><br />
+
             </div>
         )
     }
