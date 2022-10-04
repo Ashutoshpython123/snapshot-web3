@@ -11,6 +11,9 @@ const projectSchema = new mongoose.Schema(
         to: {
             type: String,
         },
+        block: {
+            type : Number,
+        }
 	},
 	{
 		timestamps: true,

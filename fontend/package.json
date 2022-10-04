@@ -21,6 +21,7 @@
 		"apollo-boost": "^0.4.9",
 		"axios": "^0.21.1",
 		"date-fns": "^2.22.1",
+		"ethereum-input-data-decoder": "^0.4.2",
 		"ethers": "^5.4.7",
 		"glamor": "^2.20.40",
 		"graphql": "^14.7.0",

@@ -3,13 +3,13 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import DataProvider from "./redux/store";
+// import DataProvider from "./redux/store";
 
 ReactDOM.render(
   <React.StrictMode>
-    <DataProvider>
+    {/* <DataProvider> */}
       <App />
-    </DataProvider>
+    {/* </DataProvider> */}
   </React.StrictMode>,
   document.getElementById("root")
 );

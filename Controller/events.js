@@ -3,6 +3,10 @@ const Web3 = require("web3");
 const snapshot = require("../Model/snapshotModel");
 const projectModel = require("../Model/projectModel")
 const eventAbi = require("../BlockchainContractAbi/bulk_abi.json")
+const axios = require('axios')
+
+
+
 
 const nodeevents = {
   //Function to register the user.
@@ -21,14 +25,14 @@ const nodeevents = {
       var k;
       var fromBlockData = 15443367;
       var toBlockData;
-      for (k = 1; k <= 47; k++) {
+      for (k = 1; k <= 50; k++) {
 
         toBlockData = fromBlockData + (interval - 1);
-        if (k == 47) {
-          toBlockData = 15653139
+        if (k == 50) {
+          toBlockData = 15666555
         }
 
-        const res = await MyContract.getPastEvents('Transfer', {
+        const res = await MyContract.getPastEvents('PunkTransfer', {
           fromBlock: fromBlockData,
           toBlock: toBlockData
         })
@@ -38,12 +42,14 @@ const nodeevents = {
         for (let i = 0; i < res.length; i++) {
           let to = res[i].returnValues.to
           let from = res[i].returnValues.from
-          let tokenId = res[i].returnValues.tokenId
+          let tokenId = res[i].returnValues.punkIndex
+          let block = res[i].blockNumber
 
           const instance = new projectModel({
             from: from,
             to: to,
-            tokenId: tokenId
+            tokenId: tokenId,
+            block: block
           })
           await instance.save()
 
@@ -61,21 +67,84 @@ const nodeevents = {
   updateTransferFrom: async (req, res) => {
     console.log('klSFE')
     try {
+      for (let index = 1; index <= 9595; index++) {
+        const options = {
+          method: 'GET',
+          url: `https://deep-index.moralis.io/api/v2/nft/0x75E95ba5997Eb235F40eCF8347cDb11F18ff640B/${index}/transfers`,
+          headers: { accept: 'application/json', 'X-API-Key': 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
+        };
 
-      const project = await projectModel.find().sort({ createdAt: -1 })
+        console.log('++++++++++++++++++++++++++', index)
+        await axios
+          .request(options)
+          .then(async function (response) {
+            for (let i = (response.data.result.length - 1); i >= 0; i--) {
+              const element = response.data.result[i];
+              if (parseInt(element.block_number) <= 15443367) {
+                if (element.to_address === '0x73555a153d301d95a3f90919e645d301f1f9e219') {
+                  console.log(element.transaction_hash, 'stake')
+                  let instance = new snapshot({
+                    owner: element.from_address,
+                    id: element.token_id,
+                    eTokens: element.amount
+                  })
+                  await instance.save()
+                }
+                if (element.from_address === '0x73555a153d301d95a3f90919e645d301f1f9e219') {
+                  const del = await snapshot.deleteOne({ owner: element.to_address, id: element.token_id })
+                  console.log(element.transaction_hash, 'unstake')
+                }
+              }
 
-      for (let i = 0; i < project.length; i++) {
-        const evntcheck = await snapshot.findOne({ owner: project[i].to, id: project[i].tokenId })
-        if (evntcheck) {
-          console.log('__________',project[i].tokenId)
-          const result = await snapshot.findOneAndUpdate(
-            { owner: project[i].to, id: project[i].tokenId },
-            { owner: project[i].from }
-          );
-        } else {
-          console.log('heeeeeeellllLLLLLLLLLLLLLLLLLLLL', project[i].tokenId,)
-        }
+              // if (parseInt(element.block_number) > 15443367) {
+              //   var regex = new RegExp(["^", element.to_address, "$"].join(""), "i");
+              //   await snapshot.findOneAndUpdate(
+              //     { owner: regex, id: element.token_id },
+              //     { owner: element.from_address }
+              //   );
+              //   console.log('+++++++++++++++++++++++++++++++++++', element.token_id);
+              // }
+            }
+          })
+          .catch(function (error) {
+            console.error(error);
+          });
+
+        // await axios
+        //   .request(options)
+        //   .then(async function (response) {
+        //     for (let i = 0; i < response.data.result.length; i++) {
+        //       const element = response.data.result[i];
+        //       console.log('------', element.token_id);
+        //       if (parseInt(element.block_number) > 15443367) {
+        //         var regex = new RegExp(["^", element.to_address, "$"].join(""), "i");
+        //         await snapshot.findOneAndUpdate(
+        //           { owner: regex, id: element.token_id },
+        //           { owner: element.from_address }
+        //         );
+        //         console.log('+++++++++++++++++++++++++++++++++++', element.token_id);
+        //       }
+        //     }
+        //   })
+        //   .catch(function (error) {
+        //     console.error(error);
+        //   });
       }
+
+      // const project = await projectModel.find().sort({ createdAt: -1 })
+
+      // for (let i = 0; i < project.length; i++) {
+      //   const evntcheck = await snapshot.findOne({ owner: project[i].to, id: project[i].tokenId })
+      //   if (evntcheck) {
+      //     console.log('__________', project[i].tokenId)
+      //     const result = await snapshot.findOneAndUpdate(
+      //       { owner: project[i].to, id: project[i].tokenId },
+      //       { owner: project[i].from }
+      //     );
+      //   } else {
+      //     console.log('heeeeeeellllLLLLLLLLLLLLLLLLLLLL', project[i].tokenId,)
+      //   }
+      // }
 
 
       res.json({ result: 'done' })
@@ -114,26 +183,39 @@ const nodeevents = {
 
   getProfile: async (req, res) => {
     try {
-      //   const options = {
-      //     method: 'GET',
-      //     url: 'https://deep-index.moralis.io/api/v2/nft/0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB/transfers',
-      //     params: { chain: 'eth', format: 'decimal', page : 3 },
-      //     headers: { accept: 'application/json', "x-api-key" : 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
-      // };
+      // const { from, to, erc1155Metadata } = req.body
+      // const tokenId = parseInt(erc1155Metadata[0].tokenId)
+      // const amount = parseInt(erc1155Metadata[0].value)
 
-      // axios
-      //     .request(options)
-      //     .then(function (response) {
-      //         console.log(response.data);
+      // const evntcheck = await snapshot.findOne({ owner: to, id: `${tokenId}` })
+      // if (evntcheck) {
+      //   console.log(parseInt(evntcheck.eTokens), '...', amount, 'iii+++++++++++++++++', to, from)
+      //   let remToken = parseInt(evntcheck.eTokens) - amount
+      //   if (parseInt(evntcheck.eTokens) === amount) {
+      //     evntcheck.owner = from;
+      //     await evntcheck.save()
+      //   } else if (parseInt(evntcheck.eTokens) > amount) {
+      //     evntcheck.eTokens = `${remToken}`;
+      //     await evntcheck.save()
+
+      //     let instance = new snapshot({
+      //       owner: to,
+      //       id: `${tokenId}`,
+      //       eTokens: `${amount}`
       //     })
-      //     .catch(function (error) {
-      //         console.error(error);
-      //     });
-      const snap = new snapshot(req.body)
-      await snap.save()
+      //     await instance.save()
+
+      //   }
+      // }
+
+      console.log('\x1b[36m%s\x1b[0m', 'I am cyan');
+
+      // const snap = new snapshot(req.body)
+      // await snap.save()
       res.json({
         msg: "done"
       });
+
 
     } catch (err) {
       return res.status(500).json({ msg: err.message });

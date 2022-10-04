@@ -124,7 +124,7 @@ class Snapshot extends Component {
                 <br />
                 <button onClick={() => this.makeCSV()}>Snapshot data</button>
                 <CSVLink
-                    filename={`CRYPTOPUNKS (Ͼ).csv`}
+                    filename={`Psychedelics Anonymous.csv`}
                     data={this.state.csvData}
                     headers={this.state.headers}
                     target="_blank"

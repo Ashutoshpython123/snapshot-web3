@@ -5,6 +5,8 @@ import Web3 from "web3";
 import { postDataAPI } from "./utils/API"
 import axios from 'axios';
 import { Alchemy, Network, fromHex } from "alchemy-sdk";
+const InputDataDecoder = require('ethereum-input-data-decoder');
+const decoder = new InputDataDecoder(Abi);
 
 let web3 = new Web3(
     new Web3.providers.HttpProvider("https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161")
@@ -178,31 +180,46 @@ class NFTSnapshot extends Component {
             category: ["erc1155"],
             excludeZeroValue: false,
         });
+
         console.log(response)
 
-        // const nftId = 5100;
+        for (let index = 353; index >= 0; index--) {
+            console.log(index)
+            const element = response.transfers[index];
+            await postDataAPI('insertOwner', element)
+        }
 
-        // Get transactions for the NFT
-        // let txns = response.transfers.filter(
-        //   (txn) => fromHex(txn.erc721TokenId) === nftId
-        // );
-        // console.log('++++++++++++',txns);
 
-        // const data = await alchemy.core.getAssetTransfers({
-        //     fromBlock: 15443367,
-        //     fromAddress: "0xeD01f8A737813F0bDA2D4340d191DBF8c2Cbcf30",
-        //     category: ["external", "internal", "erc20", "erc721", "erc1155"],
-        //   });
 
-          
+
+
         // console.log(parseInt("0x000000000000000000000000000000000000000000000000000000000000114a"))
         // console.log(parseInt("0xebb1ab"), parseInt("0xebb697"))
         // console.log(data)
         // const filterd = data.transfers.filter(txn => txn.asset === "WPUNKS")
         // console.log(filterd)
 
-        const owner = await alchemy.nft.getOwnersForNft("0xf64e6fB725f04042b5197e2529b84be4a925902C", 1);
-        console.log(owner);
+        // const owner = await alchemy.nft.getOwnersForNft("0xf64e6fB725f04042b5197e2529b84be4a925902C", 333);
+        // const contractInstance = new web3.eth.Contract(
+        //     Abi,
+        //     "0xf64e6fB725f04042b5197e2529b84be4a925902C"
+        // );
+
+        // console.log(owner);
+        // for (let index = 0; index < owner.owners.length; index++) {
+        //     const element = owner.owners[index];
+
+        //     var data = await contractInstance.methods.balanceOf(element, 333).call();
+        //     let instance = {
+        //         owner: element,
+        //         id: '333',
+        //         eTokens: `${data}`
+        //     }
+        //     await postDataAPI('insertOwner', instance)
+
+        //     console.log('------', instance)
+        // }
+        console.log('done')
     }
 
 
