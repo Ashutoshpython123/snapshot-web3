@@ -8,5 +8,5 @@ router.get("/arrayEvent", fetchContractEvents.arrayEvent);
 
 router.post("/insertOwner", fetchContractEvents.getProfile)
 router.get("/updateTransfer", fetchContractEvents.updateTransferFrom)
-router.post("/addprofilecsv", fetchContractEvents.addProfilecsv)
+router.get("/getNftTransfer", fetchContractEvents.getNftTransfer)
 module.exports = router;

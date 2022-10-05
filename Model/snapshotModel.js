@@ -5,13 +5,18 @@ const snapshotSchema = mongoose.Schema(
         owner: {
             type: String,
         },
-        id: {
+        from: {
+            type: String,
+        },
+        tokenId: {
             type: String,
         },
         eTokens: {
             type: String,
         },
-
+        block: {
+            type: String,
+        },
     },
     {
         timestamps: true,

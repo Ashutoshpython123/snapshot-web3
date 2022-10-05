@@ -223,21 +223,47 @@ const nodeevents = {
   },
 
 
-  createVesting: async (req, res) => {
+  getNftTransfer: async (req, res) => {
     try {
-      var addr = req.body.addr;
-      var upcPoolData = await upcPool.findOne({ address: addr.toLowerCase() });
-      const vesting = new Vesting({
-        vetsing_date: req.body.vetsing_date,
-        contract_addr: addr,
-        pool_type: upcPoolData.up_pool_access,
-        vesting_percentage: req.body.vesting_percentage,
-        return_of_investment: req.body.return_of_investment,
-        token_symbol: upcPoolData.symbol,
-      });
+      var cursor;
+      for (let index = 1; index <= 122; index++) {
+        const options = {
+          method: 'GET',
+          url: `https://deep-index.moralis.io/api/v2/nft/0xf64e6fB725f04042b5197e2529b84be4a925902C/${index}/transfers`,
+          params: {
+            chain: 'eth',
+            format: 'decimal',
+            cursor: cursor
+          },
+          headers: { accept: 'application/json', 'X-API-Key': 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
+        };
 
-      await vesting.save();
-      res.json({ msg: "IGO Detail is dumped!" })
+        console.log('++++++++++++++++++++++++++', index)
+        await axios
+          .request(options)
+          .then(async function (response) {
+            cursor = response.data.cursor
+            console.log(response.data.result.length,response.data.page, '__________')
+            for (let i = 0; i < response.data.result.length; i++) {
+              const element = response.data.result[i];
+              if (parseInt(element.block_number) <= 15443367) {
+                  let instance = new snapshot({
+                    block : element.block_number,
+                    owner: element.to_address,
+                    from: element.from_address,
+                    tokenId: element.token_id,
+                    eTokens: element.amount
+                  })
+                  await instance.save()
+                }                
+              }           
+          })
+          .catch(function (error) {
+            console.error(error);
+          });       
+      }
+
+      res.json({ msg: "NFT Transfer!" })
     } catch (err) {
       return res.status(500).json({ msg: err.message });
     }
