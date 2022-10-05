@@ -1,1 +1,1 @@
-# snapshot-web3-moralis-alchemy
+# snapshot-mern-web3-moralis-alchemy
