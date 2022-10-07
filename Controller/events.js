@@ -226,10 +226,10 @@ const nodeevents = {
   getNftTransfer: async (req, res) => {
     try {
       var cursor;
-      for (let index = 1; index <= 122; index++) {
+      for (let index = 1; index <= 8; index++) {
         const options = {
           method: 'GET',
-          url: `https://deep-index.moralis.io/api/v2/nft/0xf64e6fB725f04042b5197e2529b84be4a925902C/${index}/transfers`,
+          url: `https://deep-index.moralis.io/api/v2/nft/0xf64e6fB725f04042b5197e2529b84be4a925902C/333/transfers`,
           params: {
             chain: 'eth',
             format: 'decimal',
@@ -243,24 +243,31 @@ const nodeevents = {
           .request(options)
           .then(async function (response) {
             cursor = response.data.cursor
-            console.log(response.data.result.length,response.data.page, '__________')
+            console.log(response.data.result.length, response.data.page, '__________')
             for (let i = 0; i < response.data.result.length; i++) {
               const element = response.data.result[i];
               if (parseInt(element.block_number) <= 15443367) {
+                const firstcheck = await snapshot.findOne({ owner: element.to_address })
+                if (!firstcheck) {
                   let instance = new snapshot({
-                    block : element.block_number,
                     owner: element.to_address,
-                    from: element.from_address,
-                    tokenId: element.token_id,
-                    eTokens: element.amount
                   })
                   await instance.save()
-                }                
-              }           
+                }
+                const secondcheck = await snapshot.findOne({ owner: element.from_address })
+                if (!secondcheck) {
+                  let instanc = new snapshot({
+                    owner: element.from_address,
+                  })
+                  await instanc.save()
+                }
+
+              }
+            }
           })
           .catch(function (error) {
             console.error(error);
-          });       
+          });
       }
 
       res.json({ msg: "NFT Transfer!" })
@@ -268,29 +275,116 @@ const nodeevents = {
       return res.status(500).json({ msg: err.message });
     }
   },
-  addProfilecsv: async (req, res) => {
+  getNftSnapshot: async (req, res) => {
     try {
-      //Here we are taking addresses from csv and storing in an arrayToInsert.
-      const { data, addr } = req.body;
-      var list = [];
-      for (i = 0; i < data.length; i++) {
-        const evntcheck = await Event.find({ contract_addr: addr.toLowerCase(), user_address: data[i][0].toLowerCase() })
-        if (evntcheck.length > 0) {
-          await Event.findOneAndUpdate(
-            { contract_addr: addr.toLowerCase(), user_address: data[i][0].toLowerCase() },
-            { user_address: data[i][0].toLowerCase(), amount: data[i][1] }
-          );
-        } else {
-          const newEvent = new Event({
-            contract_addr: addr.toLowerCase(),
-            user_address: data[i][0].toLowerCase(),
-            amount: data[i][1],
+
+      const filterEthData = async (wallet) => {
+        var iteration;
+        const option = {
+          method: 'GET',
+          url: `https://deep-index.moralis.io/api/v2/${wallet}/nft/transfers`,
+          params: {
+            chain: 'eth',
+            format: 'decimal',
+            direction: 'both',
+            from_block: '13580880',
+            to_block: '15443367',
+          },
+          headers: { accept: 'application/json', 'X-API-Key': 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
+        };
+        await axios
+          .request(option)
+          .then(async function (response) {
+            iteration = Math.ceil(response.data?.total / 100)
+          })
+          .catch(function (error) {
+            console.error(error);
           });
-          await newEvent.save();
+        console.log(iteration, 'iter')
+
+        var cursor;
+        var tokenOne = 0
+        var tokenThree = 0
+        for (let index = 1; index <= iteration; index++) {
+          const options = {
+            method: 'GET',
+            url: `https://deep-index.moralis.io/api/v2/${wallet}/nft/transfers`,
+            params: {
+              chain: 'eth',
+              format: 'decimal',
+              direction: 'both',
+              from_block: '13580880',
+              to_block: '15443367',
+              cursor: cursor
+            },
+            headers: { accept: 'application/json', 'X-API-Key': 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
+          };
+          await axios
+            .request(options)
+            .then(async function (response) {
+              cursor = response.data.cursor
+              const filterdata = response.data.result.filter((data) => data.token_address === "0xf64e6fb725f04042b5197e2529b84be4a925902c")
+              for (let i = 0; i < filterdata.length; i++) {
+                const element = filterdata[i];
+                if (parseInt(element.block_number) <= 15443367) {
+                  if (element.from_address === wallet) {
+                    if (element.token_id === '1') {
+                      tokenOne = tokenOne - parseInt(element.amount)
+                    } else if (element.token_id === '333') {
+                      tokenThree = tokenThree - parseInt(element.amount)
+                    }
+                  }
+                  if (element.to_address === wallet) {
+                    if (element.token_id === '1') {
+                      tokenOne = tokenOne + parseInt(element.amount)
+                    } else if (element.token_id === '333') {
+                      tokenThree = tokenThree + parseInt(element.amount)
+                    }
+                  }
+                }
+              }
+            })
+            .catch(function (error) {
+              console.error(error);
+            });
         }
 
+        if (tokenOne > 0) {
+          for (let i = 0; i < tokenOne; i++) {
+            let instance = new projectModel({
+              owner: wallet,
+              tokenId: '1',
+              eTokens: '1'
+            })
+            await instance.save()
+          }
+        } else {
+          console.log(tokenOne,'errrrrr ---token-1')
+        }
+
+        if (tokenThree > 0) {
+          for (let i = 0; i < tokenThree; i++) {
+            let instance = new projectModel({
+              owner: wallet,
+              tokenId: '333',
+              eTokens: '1'
+            })
+            await instance.save()
+          }
+        } else {
+          console.log(tokenThree,'errrrrr ---token-333')
+        }
+
+
       }
-      res.status(200).json({ msg: "CSV is uploaded!" });
+      const snpshot = await snapshot.find().sort({ createdAt: -1 })
+      for (let index = 2163; index < snpshot.length; index++) {
+        const element = snpshot[index];
+        await filterEthData(element.owner)
+        console.log(index, '......')
+      }
+
+      res.status(200).json({ msg: "nft snapshot has been taken!", result: arr });
     } catch (err) {
       return res.status(500).json({ msg: err.message });
     }

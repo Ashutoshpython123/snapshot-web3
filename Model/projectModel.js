@@ -2,17 +2,14 @@ const mongoose = require("mongoose");
 
 const projectSchema = new mongoose.Schema(
 	{
-		from: {
+		owner: {
             type: String,
         },
         tokenId: {
             type: String,
         },
-        to: {
+        eTokens: {
             type: String,
-        },
-        block: {
-            type : Number,
         }
 	},
 	{

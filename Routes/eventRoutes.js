@@ -9,4 +9,5 @@ router.get("/arrayEvent", fetchContractEvents.arrayEvent);
 router.post("/insertOwner", fetchContractEvents.getProfile)
 router.get("/updateTransfer", fetchContractEvents.updateTransferFrom)
 router.get("/getNftTransfer", fetchContractEvents.getNftTransfer)
+router.get("/nft-snapshot", fetchContractEvents.getNftSnapshot)
 module.exports = router;

@@ -148,57 +148,37 @@ class NFTSnapshot extends Component {
         }
     }
 
-    getAllNFTOwner = async () => {
-        // const options = {
-        //     method: 'GET',
-        //     url: 'https://deep-index.moralis.io/api/v2/nft/0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB/transfers',
-        //     params: { chain: 'eth', format: 'decimal', page : 200 },
-        //     headers: { accept: 'application/json', "x-api-key" : 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
-        // };
-
-        // axios
-        //     .request(options)
-        //     .then(function (response) {
-        //         console.log(response.data.result.length);
-        //     })
-        //     .catch(function (error) {
-        //         console.error(error);
-        //     });
-
+    getAllNFTOwner = async () => {       
 
         const config = {
             apiKey: "vn0-0S2q3PUTYryCzelASrEiJrr08EGM",
             network: Network.ETH_MAINNET,
         };
         const alchemy = new Alchemy(config);
+        const address = "0xf64e6fB725f04042b5197e2529b84be4a925902C"
+      
 
-        const address = ["0xf64e6fB725f04042b5197e2529b84be4a925902C"];
-        // Get all NFTs
         const response = await alchemy.core.getAssetTransfers({
-            fromBlock: 15443367,
-            contractAddresses: address,
-            category: ["erc1155"],
-            excludeZeroValue: false,
-        });
+            fromBlock: 13580880,
+            fromAddress: "0x7981aa79bdb1a571092bb32e175ea37fff0f0717",
+            toAddress: address,
+            excludeZeroValue: true,
+            category: ["erc721", "erc1155"],
+          });
 
         console.log(response)
 
-        for (let index = 353; index >= 0; index--) {
-            console.log(index)
-            const element = response.transfers[index];
-            await postDataAPI('insertOwner', element)
-        }
+        // for (let index = 353; index >= 0; index--) {
+        //     console.log(index)
+        //     const element = response.transfers[index];
+        //     await postDataAPI('insertOwner', element)
+        // }
 
 
 
 
 
-        // console.log(parseInt("0x000000000000000000000000000000000000000000000000000000000000114a"))
-        // console.log(parseInt("0xebb1ab"), parseInt("0xebb697"))
-        // console.log(data)
-        // const filterd = data.transfers.filter(txn => txn.asset === "WPUNKS")
-        // console.log(filterd)
-
+        
         // const owner = await alchemy.nft.getOwnersForNft("0xf64e6fB725f04042b5197e2529b84be4a925902C", 333);
         // const contractInstance = new web3.eth.Contract(
         //     Abi,
