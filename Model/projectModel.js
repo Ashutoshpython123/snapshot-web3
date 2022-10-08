@@ -1,20 +1,18 @@
 const mongoose = require("mongoose");
 
 const projectSchema = new mongoose.Schema(
-	{
-		owner: {
+    {
+        owner: {
             type: String,
         },
-        tokenId: {
-            type: String,
+        amount: {
+            type: Number,
         },
-        eTokens: {
-            type: String,
-        }
-	},
-	{
-		timestamps: true,
-	},
+
+    },
+    {
+        timestamps: true,
+    },
 );
 
 module.exports = mongoose.model("projects", projectSchema);

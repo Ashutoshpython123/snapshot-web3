@@ -6,7 +6,40 @@ const eventAbi = require("../BlockchainContractAbi/bulk_abi.json")
 const axios = require('axios')
 
 
+function compareBlock(a, b) {
 
+  return a.block - b.block;
+}
+
+const fetchLiquidityLocked = async (contractAddress, blockNo, snft) => {
+  try {
+    return new Promise(async (resolve, reject) => {
+      let getTotalSupplyUrl = "";
+      let tokenBalanceUrl = "";
+      getTotalSupplyUrl = `https://api.bscscan.com/api?module=stats&action=tokensupplyhistory&contractaddress=${contractAddress}&blockno=${blockNo}&apikey=${process.env.BSC_API_KEY}`
+      tokenBalanceUrl = `https://api.bscscan.com/api?module=account&action=tokenbalancehistory&contractaddress=${snft}&address=${contractAddress}&blockno=${blockNo}&apikey=${process.env.BSC_API_KEY}`;
+
+
+      const getTotalSupply = await axios.get(getTotalSupplyUrl);
+      const getTokenBalance = await axios.get(tokenBalanceUrl);
+
+      const totalSupply = +getTotalSupply.data.result / Math.pow(10, 18);
+      const tokenBalance = +getTokenBalance.data.result / Math.pow(10, 18);
+
+
+      const data = {
+        totalSupply: totalSupply,
+        totalBalance: tokenBalance,
+      };
+      resolve(data);
+    });
+  } catch (err) {
+    return {
+      totalSupply: 0,
+      totalBalance: 0,
+    };
+  }
+};
 
 const nodeevents = {
   //Function to register the user.
@@ -359,7 +392,7 @@ const nodeevents = {
             await instance.save()
           }
         } else {
-          console.log(tokenOne,'errrrrr ---token-1')
+          console.log(tokenOne, 'errrrrr ---token-1')
         }
 
         if (tokenThree > 0) {
@@ -372,7 +405,7 @@ const nodeevents = {
             await instance.save()
           }
         } else {
-          console.log(tokenThree,'errrrrr ---token-333')
+          console.log(tokenThree, 'errrrrr ---token-333')
         }
 
 
@@ -385,6 +418,232 @@ const nodeevents = {
       }
 
       res.status(200).json({ msg: "nft snapshot has been taken!", result: arr });
+    } catch (err) {
+      return res.status(500).json({ msg: err.message });
+    }
+  },
+
+  getSnftSnapshot: async (req, res) => {
+    try {
+      const from_block = '20923765'
+      const to_block = '21981486'
+      const snft_token = '0x6f51a1674befdd77f7ab1246b83adb9f13613762'
+      const lp_token = "0xe4399d0c968fbc3f5449525146ea98b0dc7fc203"
+      const claimedBal = 2500
+      const filterEthData = async (wallet) => {
+
+        var isClaimed = false
+        var userBalance = 0
+        var staked = 0
+        var iterationOne;
+
+        //CALCULATE USER WALLET BALANCE
+        const option_bal = {
+          method: 'GET',
+          url: `https://deep-index.moralis.io/api/v2/${wallet}/erc20`,
+          params: {
+            chain: 'bsc',
+            to_block: '21966675',
+            token_addresses: snft_token
+          },
+          headers: { accept: 'application/json', 'X-API-Key': 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
+        };
+
+        await axios
+          .request(option_bal)
+          .then(function (response) {
+            if (response.data[0]?.balance) {
+              userBalance = parseInt(response.data[0]?.balance) / 10 ** 18
+            }
+            console.log(userBalance, 'userBalance : ');
+          })
+          .catch(function (error) {
+            console.error(error);
+          });
+
+
+        // CALCUALTE STAKE AND FARM 
+        const option = {
+          method: 'GET',
+          url: `https://deep-index.moralis.io/api/v2/${wallet}/erc20/transfers`,
+          params: { chain: 'bsc', from_block: from_block, to_block: to_block },
+          headers: { accept: 'application/json', 'X-API-Key': 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
+        };
+
+        await axios
+          .request(option)
+          .then(async function (response) {
+            iterationOne = Math.ceil(response.data?.total / 100)
+          })
+          .catch(function (error) {
+            console.error(error);
+          });
+
+        var cursorOne;
+        var stake_14days = []
+        var stake_30days = []
+        var stake_60days = 0;
+        var stake_90days = 0;
+        var stake_180days = 0;
+        var stake_lp_farm = 0;
+        for (let index = 1; index <= iterationOne; index++) {
+          const options = {
+            method: 'GET',
+            url: `https://deep-index.moralis.io/api/v2/${wallet}/erc20/transfers`,
+            params: { chain: 'bsc', from_block: '20923765', to_block: to_block, cursor: cursorOne },
+            headers: { accept: 'application/json', 'X-API-Key': 't6HIon5Osj3HdPOsQuIJT8LLmIbK3DZe87FSrUtX1yJOv7qc8EtigtkmwHGjkXJ5' }
+          };
+          await axios
+            .request(options)
+            .then(async function (response) {
+              cursorOne = response.data.cursor
+              const transferData = response.data?.result;
+              const filterdata = transferData.filter(data => data.address === snft_token && data.from_address === "0xec9099285bfca49fc990b1c385fe35107fe723ae")
+              if (filterdata.length > 0) {
+                isClaimed = true
+              }
+              if (!isClaimed) {
+                console.log(userBalance, 'claimed : ', isClaimed)
+                return
+              }
+              if (userBalance >= claimedBal) {
+                console.log('userBalance : ', userBalance)
+                return
+              }
+
+              //CALCULATE STAKE BALANCE IN ALL FIVE CONTRACT
+              const filterPool_14days_staked = transferData.filter(data => data.address === snft_token && data.to_address === "0xe6115ada0452d6c48b292971e656bc07901b53f6")
+              for (let index = 0; index < filterPool_14days_staked.length; index++) {
+                const element = filterPool_14days_staked[index];
+                stake_14days.push(
+                  {
+                    amount: parseFloat(element.value) / 10 ** 18,
+                    block: parseInt(element.block_number),
+                    type: "stake"
+                  }
+                )
+              }
+              const filterPool_14days_withdraw = transferData.filter(data => data.address === snft_token && data.from_address === "0xe6115ada0452d6c48b292971e656bc07901b53f6")
+              for (let index = 0; index < filterPool_14days_withdraw.length; index++) {
+                const element = filterPool_14days_withdraw[index];
+                stake_14days.push(
+                  {
+                    amount: parseFloat(element.value) / 10 ** 18,
+                    block: parseInt(element.block_number),
+                    type: "unstake"
+                  }
+                )
+              }
+
+              const filterPool_30days_staked = transferData.filter(data => data.address === snft_token && data.to_address === "0x707bef77240cc19714a2e9c0a86eb64fa9430c2e")
+              for (let index = 0; index < filterPool_30days_staked.length; index++) {
+                const element = filterPool_30days_staked[index];
+                stake_30days.push(
+                  {
+                    amount: parseFloat(element.value) / 10 ** 18,
+                    block: parseInt(element.block_number),
+                    type: "stake"
+                  }
+                )
+              }
+              const filterPool_30days_withdraw = transferData.filter(data => data.address === snft_token && data.from_address === "0x707bef77240cc19714a2e9c0a86eb64fa9430c2e")
+              for (let index = 0; index < filterPool_30days_withdraw.length; index++) {
+                const element = filterPool_30days_withdraw[index];
+                stake_30days.push(
+                  {
+                    amount: parseFloat(element.value) / 10 ** 18,
+                    block: parseInt(element.block_number),
+                    type: "unstake"
+                  }
+                )
+              }
+
+              const filterPool_60days_staked = transferData.filter(data => data.address === snft_token && data.to_address === "0xd1a57c5ac9bf4019073f995c6f1ac3d2f431dc7a")
+              for (let index = 0; index < filterPool_60days_staked.length; index++) {
+                const element = filterPool_60days_staked[index];
+                console.log(element)
+                stake_60days += parseFloat(element.value) / 10 ** 18;
+              }
+              const filterPool_90days_staked = transferData.filter(data => data.address === snft_token && data.to_address === "0x5cf4861b1d6ddbcf9098569f699388f1446b0db7")
+              for (let index = 0; index < filterPool_90days_staked.length; index++) {
+                const element = filterPool_90days_staked[index];
+                stake_90days += parseFloat(element.value) / 10 ** 18
+              }
+              const filterPool_180days_staked = transferData.filter(data => data.address === snft_token && data.to_address === "0xd650b71ab786361c5daad3f9bf14572b72eb60cd")
+              for (let index = 0; index < filterPool_180days_staked.length; index++) {
+                const element = filterPool_180days_staked[index];
+                stake_180days += parseFloat(element.value) / 10 ** 18
+              }
+
+              //CALCULATE STAKE BALANCE OF LP TOKEN IN FARM CONTRACT CONTRACT  
+
+              const filterFarm_lp_staked = transferData.filter(data => data.address === lp_token && data.to_address === "0x19ee35c5b2ccabaae367b6f99b2f5747e6a6c0d0")
+              for (let index = 0; index < filterFarm_lp_staked.length; index++) {
+                const element = filterFarm_lp_staked[index];
+                stake_lp_farm += parseFloat(element.value) / 10 ** 18
+              }
+              const filterFarm_lp_withdraw = transferData.filter(data => data.address === lp_token && data.from_address === "0x19ee35c5b2ccabaae367b6f99b2f5747e6a6c0d0")
+              for (let index = 0; index < filterFarm_lp_withdraw.length; index++) {
+                const element = filterFarm_lp_withdraw[index];
+                stake_lp_farm -= parseFloat(element.value) / 10 ** 18
+              }
+
+            })
+            .catch(function (error) {
+              console.error(error);
+            });
+        }
+        stake_14days = stake_14days.sort(compareBlock)
+        stake_30days = stake_30days.sort(compareBlock)
+        let stake_fourteen = 0
+        let stake_thirty = 0
+        for (let index = 0; index < stake_14days.length; index++) {
+          const element = stake_14days[index];
+          stake_fourteen = element.amount
+          if (element.type === "unstake")
+            stake_fourteen = 0
+        }
+        for (let index = 0; index < stake_30days.length; index++) {
+          const element = stake_30days[index];
+          stake_thirty = element.amount
+          if (element.type === "unstake")
+            stake_thirty = 0
+        }
+
+        let total_staked = stake_fourteen + stake_thirty + stake_60days + stake_90days + stake_180days
+        if (total_staked + userBalance >= claimedBal) {
+          console.log('total_staked + userBalance', total_staked + userBalance)
+          return
+        }
+
+
+        const liquidityLocked = await fetchLiquidityLocked(lp_token, to_block, snft_token)
+        const totalSupplyCount = stake_lp_farm / liquidityLocked.totalSupply;
+        const farmAmount = totalSupplyCount * liquidityLocked.totalBalance;
+
+        if (total_staked + farmAmount + userBalance >= claimedBal) {
+          console.log('total_staked + farmAmount + userBalance', total_staked + farmAmount + userBalance)
+          return
+        }
+
+        const instance = new projectModel({
+          owner: wallet,
+          amount: total_staked + farmAmount + userBalance
+        })
+        await instance.save()
+
+        console.log(stake_14days, '+++++___________', stake_30days, stake_60days, stake_90days, stake_180days, stake_lp_farm, total_staked, farmAmount)
+
+      }
+
+      // const snpshot = await snapshot.find()
+      // for (let index = 0; index < snpshot.length; index++) {
+      // const element = snpshot[index];
+      await filterEthData(element.owner)
+      console.log('......', index)
+      // }
+
+      res.status(200).json({ msg: "nft snapshot has been taken!" });
     } catch (err) {
       return res.status(500).json({ msg: err.message });
     }
